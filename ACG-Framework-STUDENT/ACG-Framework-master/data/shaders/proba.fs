@@ -19,7 +19,7 @@ uniform samplerCube u_texture_prem_3;
 uniform samplerCube u_texture_prem_4;
 
 // Variables afegides
-uniform vec3 lightpos;
+uniform vec3 u_lightpos;
 uniform vec3 u_camera_pos;
 uniform mat4 u_model;
 uniform mat4 u_viewprojection;
@@ -33,9 +33,6 @@ varying vec3 v_world_position;
 varying vec3 v_normal;
 varying vec2 v_uv;
 varying vec4 v_color;
-
-uniform vec3 u_camera_position;
-uniform vec3 u_light_position;
 uniform vec3 u_light_specular;
 
 uniform float u_rough_val;
@@ -215,13 +212,13 @@ vec3 specularBRDF( float roughness, vec3 f0, float NoH, float NoV, float NoL, fl
 	vec3 spec = D * G * F;
 	spec /= (4.0 * NoL * NoV + 1e-6);
 
-	return vec3(a);
+	return spec;
 }
 
 vec3 getPBR(PBRMat mat)
 {
 	//Vectors
-	vec3 L = lightpos - v_world_position; 
+	vec3 L = u_lightpos - v_world_position; 
 	L = normalize(L);
 
 	vec3 V = u_camera_pos-v_world_position;
@@ -292,7 +289,7 @@ vec3 getPBR(PBRMat mat)
 	//Apliquem el tone mapping --> HDRE
 	//color_rgb.xyz = (toneMap(color_rgb.xyz)); 
 
-	return  vec3(mat.alpha);
+	return  BRDF;
 }
 
 void main()

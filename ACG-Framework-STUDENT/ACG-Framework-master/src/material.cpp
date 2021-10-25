@@ -256,7 +256,7 @@ PBR_Material::PBR_Material()
 	//emissive_map = NULL;
 	//ao_map = NULL;
 	//opacity_map = NULL;
-	roughness = 0.01;
+	roughness = 0.4;
 	metalness = 0.99;
 
 	has_pbr = 1;
@@ -275,8 +275,8 @@ void PBR_Material::setUniforms(Camera* camera, Matrix44 model)
 {
 	//upload node uniforms
 	shader->setUniform("u_viewprojection", camera->viewprojection_matrix);
-	shader->setUniform("u_camera_position", camera->eye);
-	shader->setUniform("u_light_position", Application::instance->node_list[0]->model.getTranslation());
+	shader->setUniform("u_camera_pos", camera->eye);
+	shader->setUniform("u_lightpos", Application::instance->node_list[0]->model.getTranslation());
 	shader->setUniform("u_light_specular", Application::instance->node_list[0]->light->specular_color);
 
 	shader->setUniform("u_model", model);
