@@ -254,7 +254,7 @@ void WireframeMaterial::render(Mesh* mesh, Matrix44 model, Camera * camera)
 PBR_Material::PBR_Material()
 {	
 	//emissive_map = NULL;
-	ao_map = NULL;
+	//ao_map = NULL;
 	//opacity_map = NULL;
 	roughness = 0.01;
 	metalness = 0.99;
@@ -263,7 +263,7 @@ PBR_Material::PBR_Material()
 	has_ibl = 1;
 	//has_emissive = 1.0;
 	//has_opacity = 1.0;
-	has_ao = 1;
+	//has_ao = 1;
 }
 
 
@@ -291,35 +291,19 @@ void PBR_Material::setUniforms(Camera* camera, Matrix44 model)
 	shader->setUniform("u_has_ao", has_ao);
 	//shader->setUniform("u_has_emissive", has_emissive);
 
-	shader->setUniform("u_albedo_texture", albedo_map, 0);
+	
 	shader->setUniform("u_normal_texture", normal_map, 1);
 	shader->setUniform("u_metalness_texture", metalness_map, 2);
 	shader->setUniform("u_roughness_texture", roughness_map, 3);
 	shader->setUniform("u_LUT_BRDF", LUT_BRDF, 4);
-	//shader->setUniform("u_texture", HDRE_map, 5);	//u_texture es level 0
-	//set uniform per cada nivell
-	//shader->setUniform("u_texture_prem_0", HDRE_map_1, 6);
-	//shader->setUniform("u_texture_prem_1", HDRE_map_2, 7);
-	//shader->setUniform("u_texture_prem_2", HDRE_map_3, 8);
-	//shader->setUniform("u_texture_prem_3", HDRE_map_4, 9);
-	//shader->setUniform("u_texture_prem_4", HDRE_map_5, 10);
-
-	//if ((has_opacity)) 		//Check if we have to pass the texture to GPU
-		//shader->setUniform("u_opacity_texture", opacity_map, 11);
-
-	if ((has_ao))
-		shader->setUniform("u_ao_texture", ao_map, 12);
-
-	//if ((has_emissive))
-		//shader->setUniform("u_emissive_texture", emissive_map, 13);
-
+	shader->setUniform("u_ao_texture", ao_map, 5);
+	shader->setUniform("u_albedo_texture", albedo_map, 6);
 
 	shader->setUniform("u_metal_val", metalness);
 	shader->setUniform("u_rough_val", roughness);
 
 	if ((texture))
 		shader->setUniform("u_texture", texture);
-
 }
 
 void PBR_Material::render(Mesh* mesh, Matrix44 model, Camera* camera)

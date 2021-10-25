@@ -29,8 +29,11 @@ void SceneNode::render(Camera* camera)
 	if (material)
 		material->render(mesh, model, camera);
 		
-	if (this->light)
-		light->render(mesh, model, camera);
+	/*if (this->light)
+		light->render(mesh, model, camera);*/
+
+	if (this->pbr)
+		pbr->render(mesh, model, camera);
 
 }
 

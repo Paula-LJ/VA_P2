@@ -79,50 +79,22 @@ Application::Application(int window_width, int window_height, SDL_Window* window
 		Texture* normal_map = new Texture();
 		normal_map = Texture::Get("data/models/helmet/normal.png");
 		Texture* metalness_map = new Texture();
-		metalness_map = Texture::Get("data/models/helmet/metalness.png");
+		metalness_map = Texture::Get("data/models/helmet/roughness.png");
 		Texture* roughness_map = new Texture();
 		roughness_map = Texture::Get("data/models/helmet/roughness.png");
 		Texture* LUT_map = new Texture();
 		LUT_map = Texture::Get("data/brdfLUT.png");
-		//Texture* opacity_map = new Texture();
-		//opacity_map = Texture::Get("data/models/lantern/opacity.png");
 		Texture* ao_map = new Texture();
 		ao_map = Texture::Get("data/models/helmet/ao.png");
-		//Texture* emissive_map = new Texture();
-		//emissive_map = Texture::Get("data/models/helmet/emissive.png");
-
-		//HDRE loading (son 6 imatges (6 cares del cubemap))
-		/*Texture* HDRE_map = new Texture();
-		Texture* HDRE_map_1 = new Texture();
-		Texture* HDRE_map_2 = new Texture();
-		Texture* HDRE_map_3 = new Texture();
-		Texture* HDRE_map_4 = new Texture();
-		Texture* HDRE_map_5 = new Texture();
-
-		HDRE_map->cubemapFromHDRE(hdre, 0);
-		HDRE_map_1->cubemapFromHDRE(hdre, 1);
-		HDRE_map_2->cubemapFromHDRE(hdre, 2);
-		HDRE_map_3->cubemapFromHDRE(hdre, 3);
-		HDRE_map_4->cubemapFromHDRE(hdre, 4);
-		HDRE_map_5->cubemapFromHDRE(hdre, 5);*/
-
-		node->pbr->roughness_map = roughness_map;
-		//mat->albedo_map = albedo_map;
+		
+		node->pbr->albedo_map = albedo_map;
 		node->pbr->normal_map = normal_map;
 		node->pbr->metalness_map = metalness_map;
+		node->pbr->roughness_map = roughness_map;
 		node->pbr->LUT_BRDF = LUT_map;
-		//mat->opacity_map = opacity_map;
 		node->pbr->ao_map = ao_map;
-		//material->emissive_map = emissive_map;
 
-		/*material->HDRE_map = HDRE_map;
-		material->HDRE_map_1 = HDRE_map_1;
-		material->HDRE_map_2 = HDRE_map_2;
-		material->HDRE_map_3 = HDRE_map_3;
-		material->HDRE_map_4 = HDRE_map_4;
-		material->HDRE_map_5 = HDRE_map_5;*/
-
-		pbr->light = node_list[0]->light;
+		//pbr->light = node_list[0]->light;
 		//node->pbr = pbr;
 	}
 	
