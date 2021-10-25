@@ -26,10 +26,6 @@ uniform mat4 u_viewprojection;
 
 uniform vec4 u_color;
 uniform samplerCube u_texture;
-
-//uniform sampler2D u_opacity_texture;
-//uniform sampler2D u_emissive_texture;
-
 uniform float u_time;
 
 varying vec3 v_position;
@@ -44,25 +40,18 @@ uniform vec3 u_light_specular;
 
 uniform float u_rough_val;
 uniform float u_metal_val;
-//uniform float u_has_opacity;
-//uniform float u_has_ao;
-//uniform float u_has_emissive;
-uniform float u_has_pbr ;
-uniform float u_has_ibl;
 
-
+vec3 BRDF;
+vec3 IBL;
 
 struct PBRMat
 {
 	float metalness;
 	float roughness;
 	float ao;
-	//float opacity;
-	//float emissive;
 	float alpha;
 	vec3 specularColor;
 	vec4 diffColor;
-
 	
 };
 
@@ -90,8 +79,6 @@ vec3 getReflectionColor(vec3 r, float roughness)
 	else if(lod < 4.0) color = mix( textureCube(u_texture_prem_2, r), textureCube(u_texture_prem_3, r), lod - 3.0 );
 	else if(lod < 5.0) color = mix( textureCube(u_texture_prem_3, r), textureCube(u_texture_prem_4, r), lod - 4.0 );
 	else color = textureCube(u_texture_prem_4, r);
-
-	//color.rgb = linear_to_gamma(color.rgb);
 
 	return color.rgb;
 }
@@ -122,7 +109,6 @@ vec3 perturbNormal( vec3 N, vec3 V, vec2 texcoord, vec3 normal_pixel ){
 
 	// assume N, the interpolated vertex normal and
 	// V, the view vector (vertex to eye)
-	//vec3 normal_pixel = texture2D(normalmap, texcoord ).xyz;
 	normal_pixel = normal_pixel * 255./127. - 128./127.;
 	mat3 TBN = cotangent_frame(N, V, texcoord);
 	return normalize(TBN * normal_pixel);
@@ -163,38 +149,16 @@ vec3 toneMapUncharted(vec3 color)
     return color * whiteScale;
 }
 
-void getMaterialProperties(PBRMat mat , vec2 texcoord){
+void getMaterialProperties(inout PBRMat mat , vec2 texcoord){ 
 	
 	mat.metalness = texture2D(u_metalness_texture, texcoord ).z * u_metal_val;
 	mat.roughness = texture2D(u_roughness_texture, texcoord ).y * u_rough_val;
-
 	
 	// Passem a linial la textura albedo (color difús del material)
 	mat.diffColor = vec4(gamma_to_linear(texture2D(u_albedo_texture, texcoord).xyz),1.0); 
-	//mat.diffColor = vec4(texture2D(u_albedo_texture, texcoord).xyz,1.0); 
-
-	mat.specularColor= vec3(0.04)*(1-mat.metalness); // Volem el 4% de material dielèctric, que com és el contrari a la metalness i per això (1-metalness)
-	
-	//if(u_has_opacity != 0  ){
-		//mat.opacity = texture2D(u_opacity_texture,texcoord).x;
-	//}
-	//else {
-		//mat.opacity = 1.0;
-	//}
-
-	//if(u_has_ao != 0  ){
+	mat.specularColor= vec3(0.04)*(1-mat.metalness); // Volem el 4% de material dielèctric
 	mat.ao = texture2D(u_ao_texture,texcoord).x;
-	//}
-	//else {
-		//mat.ao = 1.0;
-	//}
-
-	//if(u_has_emissive != 0  ){
-		//material.emissive = gamma_to_linear(texture2D(u_emissive_texture, texcoord ).xyz);
-	//}
-	//else {
-		//material.emissive = vec3(0.0);
-	//}
+	
 }
 
 // Normal Distribution Function using GGX Distribution
@@ -242,7 +206,7 @@ vec3 specularBRDF( float roughness, vec3 f0, float NoH, float NoV, float NoL, fl
 	float D = D_GGX( NoH, a );
 
 	// Fresnel Function
-	vec3 F = F_Schlick( LoH, f0 );
+	vec3 F = F_Schlick( NoL, f0 );
 
 	// Visibility Function (shadowing/masking)
 	float G = G_Smith( NoV, NoL, roughness );
@@ -251,12 +215,12 @@ vec3 specularBRDF( float roughness, vec3 f0, float NoH, float NoV, float NoL, fl
 	vec3 spec = D * G * F;
 	spec /= (4.0 * NoL * NoV + 1e-6);
 
-	return spec;
+	return vec3(a);
 }
 
 vec3 getPBR(PBRMat mat)
 {
-	//Càlculs
+	//Vectors
 	vec3 L = lightpos - v_world_position; 
 	L = normalize(L);
 
@@ -274,17 +238,13 @@ vec3 getPBR(PBRMat mat)
 
 	vec3 R = -normalize(reflect(L, N));
 
-	vec3 BRDF;
-	vec3 IBL;
-
 	//we compute the reflection in base to the color and the metalness
 	vec3 f0 = mix( vec3(0.04), mat.diffColor.xyz, mat.metalness );
 
-	//if per calcular la BRDF (direct lighting).
-	//if (u_has_pbr != 0){
+	//Calculem la BRDF (direct lighting).
 
 	//metallic materials do not have diffuse
-	vec3 diffuseColor = (1.0 - mat.metalness) * mat.diffColor.xyz;
+	vec3 diffuseColor_pbr = (1.0 - mat.metalness) * mat.diffColor.xyz;
 
 	//compute the specular
 	vec3 Fr_d = specularBRDF( mat.roughness, f0, NdotH, NdotV, NdotL, LdotH);
@@ -292,59 +252,48 @@ vec3 getPBR(PBRMat mat)
 	// Here we use the Burley, but you can replace it by the Lambert.
 	// linearRoughness = squared roughness
 	mat.alpha = mat.roughness * mat.roughness;
-	vec3 Fd_d = diffuseColor * Fd_Burley(NdotV, NdotL, LdotH, mat.alpha); 
+	vec3 Fd_d = diffuseColor_pbr * Fd_Burley(NdotV, NdotL, LdotH, mat.alpha); 
 
 	//add diffuse and specular reflection
-	vec3 direct = Fr_d + Fd_d;
+	vec3 direct = (Fr_d + Fd_d) * NdotL;
 
 	//modulate direct light by light received
 	BRDF += direct;
-	//}
-	//else {
-		//BRDF = vec3(0.0); //Posem aquest valor de manera aleatòria per tal que tingui algun valor en cas de no tenir PBR.
-	//}
 
-	//if per calcular la IBL (Indirect Lighting).
-	//if(u_has_ibl != 0){
+	//CALCULEM L'IBL
+	//IBL specular
+	//vec3 specularSample = getReflectionColor(R, mat.roughness);
+	//vec2 LUT_coord = (NdotL, mat.roughness); //coordenades d'una taula LUT
 
-		//IBL specular
-		//vec3 specularSample = getReflectionColor(R, mat.roughness);
-		//vec2 LUT_coord = (NdotL, mat.roughness); //coordenades d'una taula LUT
+	//vec3 brdf2D = texture2D(u_LUT_BRDF,LUT_coord); //agafem valors de la taula LUT predeterminada
+	//float cos_theta = max(NdotV,0.0); //Fem aquest producte perquè és una de les dues coordenades del LUT (quadradet vermell i verd)
+	//vec3 F_s = FresnelSchlickRoughness(cos_theta, f0, mat.roughness);
 
-		//vec3 brdf2D = texture2D(u_LUT_BRDF,LUT_coord); //agafem valors de la taula LUT predeterminada
-		//float cos_theta = max(NdotV,0.0); //Fem aquest producte perquè és una de les dues coordenades del LUT (quadradet vermell i verd)
-		//vec3 F_s = FresnelSchlickRoughness(cos_theta, f0, mat.roughness);
-
-		//vec3 SpecularBRDF =  F_s * vec3(brdf2D.x) + vec3(brdf2D.y);
-		//vec3 SpecularIBL = specularSample * SpecularBRDF;
+	//vec3 SpecularBRDF =  F_s * vec3(brdf2D.x) + vec3(brdf2D.y);
+	//vec3 SpecularIBL = specularSample * SpecularBRDF;
 		
-		//IBL difusse
-		//vec3 diffuseSample = getReflectionColor(N, mat.roughness); 
-		//vec3 diffuseColor = mat.diffColor;
+	//IBL difusse
+	//vec3 diffuseSample = getReflectionColor(N, mat.roughness); 
+	//vec3 diffuseColor_ibl = mat.diffColor.xyz;
 
-		//vec3 DiffuseIBL = diffuseSample * diffuseColor;
+	//vec3 DiffuseIBL = diffuseSample * diffuseColor_ibl;
 		
-		//DiffuseIBL *= (1-F_s); //Per evitar que es trenqui el principi de conservació de l'energia.
+	//DiffuseIBL *= (1-F_s); //Per evitar que es trenqui el principi de conservació de l'energia.
 
-		//IBL final
-		//IBL = DiffuseIBL + SpecularIBL;
-	//}
-	//else {
-		//IBL = vec3(0.0); //Posem aquest valor de manera aleatòria per tal que tingui algun valor en cas de no tenir PBR.
-	//}
+	//IBL final
+	//IBL = DiffuseIBL + SpecularIBL;
 	
 	// Unió de les llums
 	vec3 direct_color = vec3(BRDF * NdotL); //* u_light_specular); //fem el producte de la formula f*Li*(n*l) on Li és la radiança incident, però no la posem perquè tenim en compte només una llum.
 	//vec3 indirect_color = vec3(IBL*mat.ao); 
 
-	vec3 color_rgb = direct_color; // + indirect_color; 
+	//vec3 color_rgb = direct_color + indirect_color; 
 	
 	//Apliquem el tone mapping --> HDRE
 	//color_rgb.xyz = (toneMap(color_rgb.xyz)); 
 
-	return color_rgb ;
+	return  vec3(mat.alpha);
 }
-
 
 void main()
 {
@@ -358,17 +307,14 @@ void main()
 	// 3. Shade (Direct + Indirect); 
 	// 4. Apply Tonemapping; 
 	mat.diffColor = texture2D(u_albedo_texture, v_uv);
-	//mat.metalness = texture2D(u_metalness_texture, v_uv).z;
-	//mat.roughness = texture2D(u_roughness_texture, v_uv).y;
 	
-	vec3 color = getPBR(mat);
+	vec3 color =  getPBR(mat);
 
 	//5. Any extra texture to apply after tonemapping; 
 	//vec4 color_textplus = vec4(color, textura); // FALTA AFEGIR UNBA TEXTURA EXTRA!!! E IRÍA DESPUÉS DEL LINEAR TO GAMMA
 	
 	//Last step: to gamma space
-	vec4 color_gamma =  (linear_to_gamma(color), 1.0);
-	
-	
-	gl_FragColor = texture2D(u_albedo_texture, v_uv);//color_gamma;
+	//vec4 color_gamma =  (linear_to_gamma(color), 1.0);
+		
+	gl_FragColor = vec4(color, 0.0);
 }

@@ -281,17 +281,8 @@ void PBR_Material::setUniforms(Camera* camera, Matrix44 model)
 
 	shader->setUniform("u_model", model);
 	shader->setUniform("u_time", Application::instance->time);
-
 	shader->setUniform("u_color", color);
-
-	//booleans to chose which part is computed
-	shader->setUniform("u_has_pbr", has_pbr);
-	shader->setUniform("u_has_ibl", has_ibl);
-	//shader->setUniform("u_has_opacity", has_opacity);
-	shader->setUniform("u_has_ao", has_ao);
-	//shader->setUniform("u_has_emissive", has_emissive);
-
-	
+		
 	shader->setUniform("u_normal_texture", normal_map, 1);
 	shader->setUniform("u_metalness_texture", metalness_map, 2);
 	shader->setUniform("u_roughness_texture", roughness_map, 3);

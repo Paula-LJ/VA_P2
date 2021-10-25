@@ -55,9 +55,6 @@ Application::Application(int window_width, int window_height, SDL_Window* window
 		node->light = light;
 		
 		mat->texture = new Texture();
-	
-		//mat->texture->cubemapFromImages("data/environments/dragonvale");
-		//mat->shader = Shader::Get("data/shaders/basic.vs", "data/shaders/justphong.fs");
 		node_list.push_back(node);
 		
 		skybox->mesh = Mesh::Get("data/meshes/box.ASE");
@@ -94,8 +91,6 @@ Application::Application(int window_width, int window_height, SDL_Window* window
 		node->pbr->LUT_BRDF = LUT_map;
 		node->pbr->ao_map = ao_map;
 
-		//pbr->light = node_list[0]->light;
-		//node->pbr = pbr;
 	}
 	
 	//hide the cursor
