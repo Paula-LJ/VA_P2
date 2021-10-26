@@ -63,8 +63,8 @@ Application::Application(int window_width, int window_height, SDL_Window* window
 		skybox->texture = new Texture();
 		skybox->texture->cubemapFromImages("data/environments/dragonvale");
 
-		HDRE* hdre = HDRE::Get("data/environments/studio.hdre");
-		Texture* hdre_tex = new Texture();
+		//HDRE* hdre = HDRE::Get("data/environments/studio.hdre");
+		//Texture* hdre_tex = new Texture();
 
 		pbr = new PBR_Material();
 		pbr->shader = Shader::Get("data/shaders/basic.vs", "data/shaders/proba.fs");

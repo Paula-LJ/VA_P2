@@ -247,7 +247,6 @@ vec3 getPBR(PBRMat mat)
 	vec3 Fr_d = specularBRDF( mat.roughness, f0, NdotH, NdotV, NdotL, LdotH);
 
 	// Here we use the Burley, but you can replace it by the Lambert.
-	// linearRoughness = squared roughness
 	mat.alpha = mat.roughness * mat.roughness;
 	vec3 Fd_d = diffuseColor_pbr * Fd_Burley(NdotV, NdotL, LdotH, mat.alpha); 
 
